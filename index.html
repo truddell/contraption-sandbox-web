@@ -3,9 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes, viewport-fit=cover">
     <title>Kerfloop</title>
     <!-- Added to an iPad's home screen, the page opens full screen without the browser's bars. -->
+    <link rel="icon" type="image/png" sizes="32x32" href="TemplateData/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="TemplateData/icon-192.png">
+    <link rel="apple-touch-icon" href="TemplateData/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
@@ -22,7 +26,7 @@
     <canvas id="unity-canvas" tabindex="-1"></canvas>
     <div id="loading"><div id="loading-bar"></div></div>
     <div id="warning"></div>
-    <script src="Build/web.loader.js"></script>
+    <script src="Build/22e31b9565390c89ec7d238ddb85a982.loader.js"></script>
     <script>
       // A message from the engine: an error stays, anything else goes after a few seconds.
       function showBanner(msg, type) {
@@ -37,9 +41,9 @@
 
       createUnityInstance(document.querySelector("#unity-canvas"), {
         arguments: [],
-        dataUrl: "Build/web.data.unityweb",
-        frameworkUrl: "Build/web.framework.js.unityweb",
-        codeUrl: "Build/web.wasm.unityweb",
+        dataUrl: "Build/f68fb76e0983228b5eff43bacf8a51fb.data.unityweb",
+        frameworkUrl: "Build/07e4d753e9b99b228c5ac17d8a2cf260.framework.js.unityweb",
+        codeUrl: "Build/58e1a44da3ff113d90b4e0b817e30d28.wasm.unityweb",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Woolyback LLC",
         productName: "Kerfloop",
@@ -49,6 +53,12 @@
         // A sound the browser cannot decode should cost only that sound, not stop the game with a box.
         errorHandler: function (err, url, line) {
           var m = String(err);
+          // keep every error, with where it came from, for the ?log view below
+          (window.kerfloopErrors = window.kerfloopErrors || []).push(new Date().toISOString() + "  " + m + (url ? "  @ " + url + ":" + line : ""));
+          if (window.kerfloopShowLog) window.kerfloopShowLog();
+          // "Script error." is all a browser says when it hides an error's details (often from outside the game,
+          // such as an extension or a page translator); the game carries on, so do not stop it with a box
+          if (m.indexOf("Script error") === 0) { console.warn("Hidden script error skipped"); return true; }
           if (m.indexOf("EncodingError") >= 0 || m.indexOf("Decoding failed") >= 0 || m.indexOf("decodeAudioData") >= 0) {
             console.warn("A sound could not be decoded and was skipped: " + m);
             return true;
@@ -58,10 +68,23 @@
       }, function (progress) {
         document.querySelector("#loading-bar").style.width = (100 * progress) + "%";
       }).then(function (unityInstance) {
+        window.kerfloopInstance = unityInstance;
         document.querySelector("#loading").style.display = "none";
       }).catch(function (message) {
         alert(message);
       });
+      // Open the page as .../?log to see any errors (to send to us); nothing is sent anywhere.
+      if (/[?&]log/.test(location.search)) {
+        var box = document.createElement("pre");
+        box.style.cssText = "position:fixed;left:0;right:0;bottom:0;max-height:40%;overflow:auto;margin:0;padding:8px;background:rgba(0,0,0,0.8);color:#fdf3dc;font:12px monospace;z-index:9999;white-space:pre-wrap";
+        box.textContent = "Kerfloop log: no errors yet.";
+        document.body.appendChild(box);
+        window.kerfloopShowLog = function () { box.textContent = (window.kerfloopErrors || []).join(String.fromCharCode(10)); };
+        window.addEventListener("error", function (e) {
+          (window.kerfloopErrors = window.kerfloopErrors || []).push(new Date().toISOString() + "  window: " + e.message + " @ " + e.filename + ":" + e.lineno + (e.error && e.error.stack ? String.fromCharCode(10) + e.error.stack : ""));
+          window.kerfloopShowLog();
+        });
+      }
     </script>
   </body>
 </html>
