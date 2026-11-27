@@ -45,6 +45,7 @@
         productName: "Contraption Sandbox (mockup)",
         productVersion: "1.0",
         showBanner: showBanner,
+        autoSyncPersistentDataPath: true, // machines kept on the shelf stay after the page is closed
       }, function (progress) {
         document.querySelector("#loading-bar").style.width = (100 * progress) + "%";
       }).then(function (unityInstance) {
