@@ -46,6 +46,15 @@
         productVersion: "1.0",
         showBanner: showBanner,
         autoSyncPersistentDataPath: true, // machines kept on the shelf stay after the page is closed
+        // A sound the browser cannot decode should cost only that sound, not stop the game with a box.
+        errorHandler: function (err, url, line) {
+          var m = String(err);
+          if (m.indexOf("EncodingError") >= 0 || m.indexOf("Decoding failed") >= 0 || m.indexOf("decodeAudioData") >= 0) {
+            console.warn("A sound could not be decoded and was skipped: " + m);
+            return true;
+          }
+          return false;
+        },
       }, function (progress) {
         document.querySelector("#loading-bar").style.width = (100 * progress) + "%";
       }).then(function (unityInstance) {
